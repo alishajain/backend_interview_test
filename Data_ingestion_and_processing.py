@@ -2,26 +2,35 @@ import time
 import json
 from collections import deque
 from datetime import datetime
-import random
 
 class MachineDataProcessor:
-    def __init__(self, window_size=5, interval=10):
+    def __init__(self, window_size=5, interval=10, data_file="data.json"):
         self.window_size = window_size
         self.interval = interval
+        self.data_file = data_file
         self.data_queue = {
             "temperature": deque(maxlen=self.window_size),
             "speed": deque(maxlen=self.window_size),
         }
         self.status = "RUNNING"
 
-    def simulate_machine_data(self):
-        """Simulate reading data from a machine"""
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "temperature": round(random.uniform(60, 85), 2),
-            "speed": round(random.uniform(1000, 1200), 2),
-            "status": random.choice(["RUNNING", "STOPPED", "WARNING"])
-        }
+    def read_machine_data(self):
+        """Read machine data from a JSON file"""
+        try:
+            with open(self.data_file, "r") as file:
+                data = json.load(file)
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "temperature": data.get("temperature"),
+                    "speed": data.get("speed"),
+                    "status": data.get("status", "UNKNOWN")
+                }
+        except FileNotFoundError:
+            print(f"Error: File '{self.data_file}' not found.")
+            return None
+        except json.JSONDecodeError:
+            print(f"Error: Failed to decode JSON from '{self.data_file}'.")
+            return None
 
     def calculate_moving_averages(self):
         """Calculate moving averages for all numeric parameters"""
@@ -32,12 +41,15 @@ class MachineDataProcessor:
         return averages
 
     def process_data(self):
-        """Simulate data processing with moving averages"""
-        new_data = self.simulate_machine_data()
+        """Process data from the JSON file and calculate moving averages"""
+        new_data = self.read_machine_data()
+        if not new_data:
+            return None
 
         # Update the deque with new readings
         for key in self.data_queue:
-            self.data_queue[key].append(new_data[key])
+            if new_data[key] is not None:
+                self.data_queue[key].append(new_data[key])
 
         # Calculate moving averages
         moving_averages = self.calculate_moving_averages()
@@ -58,7 +70,8 @@ class MachineDataProcessor:
             while True:
                 print(f"\nReading #{iteration} at {datetime.now().strftime('%H:%M:%S')}")
                 result = self.process_data()
-                print(json.dumps(result, indent=2))
+                if result:
+                    print(json.dumps(result, indent=2))
                 print("Waiting for next reading...")
                 time.sleep(self.interval)
                 iteration += 1
@@ -69,5 +82,6 @@ if __name__ == "__main__":
     # Configure the processor
     window_size = int(input("Enter moving average window size (default 5): ") or 5)
     interval = int(input("Enter data fetching interval in seconds (default 10): ") or 10)
-    processor = MachineDataProcessor(window_size=window_size, interval=interval)
+    data_file = input("Enter the path to the data file (default 'data.json'): ") or "data.json"
+    processor = MachineDataProcessor(window_size=window_size, interval=interval, data_file=data_file)
     processor.run()
