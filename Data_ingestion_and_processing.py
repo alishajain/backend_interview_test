@@ -15,7 +15,7 @@ class MachineDataProcessor:
         self.status = "RUNNING"
 
     def read_machine_data(self):
-        """Read machine data from a JSON file"""
+        """It reads machine data from a json  file."""
         try:
             with open(self.data_file, "r") as file:
                 data = json.load(file)
@@ -33,7 +33,7 @@ class MachineDataProcessor:
             return None
 
     def calculate_moving_averages(self):
-        """Calculate moving averages for all numeric parameters"""
+        """It calculate moving averages"""
         averages = {
             key: round(sum(values) / len(values), 2) if values else None
             for key, values in self.data_queue.items()
@@ -41,20 +41,20 @@ class MachineDataProcessor:
         return averages
 
     def process_data(self):
-        """Process data from the JSON file and calculate moving averages"""
+        """It processes data from the JSON file"""
         new_data = self.read_machine_data()
         if not new_data:
             return None
 
-        # Update the deque with new readings
+        # Step 1 : Update the deque with new data
         for key in self.data_queue:
             if new_data[key] is not None:
                 self.data_queue[key].append(new_data[key])
 
-        # Calculate moving averages
+        # Step 2: Calculate moving averages
         moving_averages = self.calculate_moving_averages()
 
-        # Combine data and averages
+        # Step 3: Combine data and averages
         transformed_data = {
             "timestamp": new_data["timestamp"],
             "moving_averages": moving_averages,
@@ -64,7 +64,7 @@ class MachineDataProcessor:
         return transformed_data
 
     def run(self):
-        """Continuously process data at the specified interval"""
+        """To continuously process data at the specified interval"""
         iteration = 1
         try:
             while True:
@@ -79,7 +79,7 @@ class MachineDataProcessor:
             print("\nStopping data processing...")
 
 if __name__ == "__main__":
-    # Configure the processor
+    # User defined inputs 
     window_size = int(input("Enter moving average window size (default 5): ") or 5)
     interval = int(input("Enter data fetching interval in seconds (default 10): ") or 10)
     data_file = input("Enter the path to the data file (default 'data.json'): ") or "data.json"
